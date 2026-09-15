@@ -24,10 +24,62 @@ NEGATIVE_THRESHOLD: float = -0.05
 MAX_HEADLINES: int = 15
 
 SENTIMENT_COLORS: dict[str, str] = {
-    "Positive": "#00D4AA",
-    "Negative": "#FF4B4B",
-    "Neutral":  "#FFD700",
+    "Positive": "#10B981",
+    "Negative": "#EF4444",
+    "Neutral":  "#F59E0B",
 }
+
+# ── Inline SVG icons ────────────────────────
+SVG_LOGO = """<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="18" width="6" height="12" rx="1.5" fill="#10B981"/>
+  <rect x="13" y="10" width="6" height="20" rx="1.5" fill="#3B82F6"/>
+  <rect x="24" y="2" width="6" height="28" rx="1.5" fill="#0F172A"/>
+</svg>"""
+
+SVG_POSITIVE = """<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="9" cy="9" r="9" fill="#D1FAE5"/>
+  <path d="M5.5 9.5L7.5 11.5L12.5 6.5" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+SVG_NEGATIVE = """<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="9" cy="9" r="9" fill="#FEE2E2"/>
+  <path d="M6.5 6.5L11.5 11.5M11.5 6.5L6.5 11.5" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+</svg>"""
+
+SVG_NEUTRAL = """<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="9" cy="9" r="9" fill="#FEF3C7"/>
+  <path d="M6 9H12" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+</svg>"""
+
+SVG_CHART = """<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 3.5V10L14.5 12.5" stroke="#64748B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>"""
+
+SVG_TABLE = """<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="3" width="16" height="14" rx="2" stroke="#64748B" stroke-width="1.5" fill="none"/>
+  <line x1="2" y1="7.5" x2="18" y2="7.5" stroke="#64748B" stroke-width="1.5"/>
+  <line x1="7.5" y1="3" x2="7.5" y2="17" stroke="#64748B" stroke-width="1.5"/>
+</svg>"""
+
+SVG_SEARCH = """<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="7.5" cy="7.5" r="5.5" stroke="white" stroke-width="2" fill="none"/>
+  <line x1="12" y1="12" x2="16" y2="16" stroke="white" stroke-width="2" stroke-linecap="round"/>
+</svg>"""
+
+SVG_BULLISH = """<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 20L10 14L14 18L24 8" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 8H24V15" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+SVG_BEARISH = """<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 8L10 14L14 10L24 20" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17 20H24V13" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
+
+SVG_NEUTRAL_TREND = """<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 14H24" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M19 9L24 14L19 19" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>"""
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -48,16 +100,13 @@ def fetch_news(ticker: str) -> Optional[list[dict]]:
     Fetch the latest news headlines for *ticker* via yfinance.
 
     Handles structural differences across yfinance versions by trying
-    both flat (``item["title"]``) and nested (``item["content"]["title"]``)
-    layouts.  Returns a normalised list of dicts with ``title`` and
-    ``publisher`` keys, capped at :pydata:`MAX_HEADLINES`, or ``None``
-    on failure.
+    both flat and nested layouts.  Returns a normalised list of dicts
+    with ``title`` and ``publisher`` keys, capped at MAX_HEADLINES,
+    or ``None`` on failure.
     """
     try:
         stock = yf.Ticker(ticker)
 
-        # Quick validity check – if info comes back near-empty the ticker
-        # is almost certainly invalid.
         info = stock.info or {}
         if info.get("quoteType") is None and info.get("shortName") is None:
             return None
@@ -71,12 +120,9 @@ def fetch_news(ticker: str) -> Optional[list[dict]]:
             title: Optional[str] = None
             publisher: str = "Unknown"
 
-            # Layout A – flat dict  (yfinance < 0.2.36)
             if "title" in item:
                 title = item["title"]
                 publisher = item.get("publisher", "Unknown")
-
-            # Layout B – nested under "content"  (yfinance ≥ 0.2.36)
             elif "content" in item and isinstance(item["content"], dict):
                 content = item["content"]
                 title = content.get("title")
@@ -90,7 +136,7 @@ def fetch_news(ticker: str) -> Optional[list[dict]]:
         return normalised if normalised else None
 
     except Exception as exc:
-        st.error(f"⚠️  Network / API error: {exc}")
+        st.error(f"Network / API error: {exc}")
         return None
 
 
@@ -104,7 +150,7 @@ def analyze_sentiment(
     """
     Score each headline with VADER and return a tidy DataFrame.
 
-    Columns: Status (emoji) · Headline · Publisher · Score · Sentiment
+    Columns: Status · Headline · Publisher · Score · Sentiment
     """
     records: list[dict] = []
     for item in headlines:
@@ -112,11 +158,11 @@ def analyze_sentiment(
         compound: float = analyzer.polarity_scores(title)["compound"]
 
         if compound >= POSITIVE_THRESHOLD:
-            label, indicator = "Positive", "🟢"
+            label, indicator = "Positive", SVG_POSITIVE
         elif compound <= NEGATIVE_THRESHOLD:
-            label, indicator = "Negative", "🔴"
+            label, indicator = "Negative", SVG_NEGATIVE
         else:
-            label, indicator = "Neutral", "🟡"
+            label, indicator = "Neutral", SVG_NEUTRAL
 
         records.append(
             {
@@ -131,166 +177,236 @@ def analyze_sentiment(
     return pd.DataFrame(records)
 
 
-def compute_verdict(df: pd.DataFrame) -> tuple[str, str, str]:
+def compute_verdict(df: pd.DataFrame) -> tuple[str, str, str, str]:
     """
     Derive the overall market verdict from the average compound score.
 
-    Returns ``(label, emoji, hex_colour)``.
+    Returns ``(label, svg_icon, hex_colour, bg_colour)``.
     """
     avg: float = df["Score"].mean()
     if avg >= POSITIVE_THRESHOLD:
-        return "BULLISH", "🟢", "#00D4AA"
+        return "BULLISH", SVG_BULLISH, "#059669", "#F0FDF4"
     if avg <= NEGATIVE_THRESHOLD:
-        return "BEARISH", "🔴", "#FF4B4B"
-    return "NEUTRAL", "🟡", "#FFD700"
+        return "BEARISH", SVG_BEARISH, "#DC2626", "#FEF2F2"
+    return "NEUTRAL", SVG_NEUTRAL_TREND, "#D97706", "#FFFBEB"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #  4 · UI Rendering
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-# ── 4a.  Custom CSS ──────────────────────────
 def inject_custom_css() -> None:
-    """Inject the fintech-inspired stylesheet."""
+    """Inject the light fintech stylesheet with premium typography."""
     st.markdown(
         """
         <style>
         /* ── Typography ─────────────────────── */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        .stApp, .stMarkdown, .stText { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+        *, .stApp, .stMarkdown, .stText, p, span, div, h1, h2, h3, h4, h5, h6, li, td, th, label, input, button {
+            font-family: 'DM Sans', system-ui, -apple-system, sans-serif !important;
+        }
+
+        .stApp {
+            background-color: #F8FAFC;
+        }
 
         /* ── Header ─────────────────────────── */
         .app-header {
             text-align: center;
-            padding: 2rem 0 0.5rem;
+            padding: 2.5rem 0 1rem;
+        }
+        .app-header .logo-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
         }
         .app-header h1 {
-            font-size: 2.4rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #00D4AA 0%, #00A3FF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.25rem;
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 0;
             letter-spacing: -0.5px;
         }
         .app-header p {
-            color: #6B7A90;
-            font-size: 1.05rem;
-            font-weight: 300;
+            color: #94A3B8;
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin-top: 4px;
+            letter-spacing: 0.1px;
         }
 
         /* ── Divider ────────────────────────── */
         .divider {
             height: 1px;
-            background: linear-gradient(90deg, transparent 0%, #2a3050 50%, transparent 100%);
+            background: #E2E8F0;
             margin: 1.25rem 0;
         }
 
         /* ── Verdict Card ───────────────────── */
         .verdict-card {
-            background: linear-gradient(145deg, #1a1f36 0%, #151928 100%);
-            border: 1px solid #2a3050;
-            border-radius: 20px;
-            padding: 2.25rem 1rem;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 2rem 1.5rem;
             text-align: center;
             margin: 0.75rem 0 1.25rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .verdict-card .icon-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 4px;
         }
         .verdict-card .label {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             font-weight: 600;
-            color: #6B7A90;
+            color: #94A3B8;
             text-transform: uppercase;
-            letter-spacing: 2.5px;
-            margin-bottom: 0.6rem;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
         }
         .verdict-card .value {
-            font-size: 2.6rem;
-            font-weight: 800;
-            letter-spacing: 2px;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
         }
         .verdict-card .sub {
-            font-size: 0.9rem;
-            color: #6B7A90;
-            margin-top: 0.4rem;
+            font-size: 0.85rem;
+            color: #94A3B8;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        .verdict-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
         }
 
         /* ── Metric Cards ───────────────────── */
         .metric-card {
-            background: #1a1f36;
-            border: 1px solid #2a3050;
-            border-radius: 14px;
-            padding: 1.3rem 1rem;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1.25rem 1rem;
             text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            transition: box-shadow 0.2s ease;
         }
         .metric-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
         }
         .metric-card .label {
-            font-size: 0.7rem;
+            font-size: 0.68rem;
             font-weight: 600;
-            color: #6B7A90;
+            color: #94A3B8;
             text-transform: uppercase;
-            letter-spacing: 1.8px;
-            margin-bottom: 0.45rem;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
         }
         .metric-card .value {
-            font-size: 1.75rem;
+            font-size: 1.6rem;
             font-weight: 700;
-            color: #FAFAFA;
+            color: #0F172A;
         }
 
         /* ── Section Headers ────────────────── */
         .section-title {
-            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
             font-weight: 600;
-            color: #FAFAFA;
+            color: #0F172A;
             margin: 1.5rem 0 0.8rem;
-            padding-bottom: 0.45rem;
-            border-bottom: 1px solid #2a3050;
-            letter-spacing: 0.3px;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            letter-spacing: 0.2px;
         }
 
         /* ── Footer ─────────────────────────── */
         .app-footer {
             text-align: center;
             padding: 2.5rem 0 1rem;
-            color: #4A5568;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
+            color: #CBD5E1;
+            font-size: 0.78rem;
+            letter-spacing: 0.3px;
+        }
+        .app-footer a {
+            color: #94A3B8;
+            text-decoration: none;
         }
 
-        /* ── Hide Streamlit chrome ───────────── */
+        /* ── CTA placeholder text ───────────  */
+        .cta-text {
+            text-align: center;
+            color: #94A3B8;
+            margin-top: 3rem;
+            font-size: 0.95rem;
+        }
+        .cta-text strong {
+            color: #64748B;
+        }
+
+        /* ── Hide Streamlit chrome ───────────  */
         #MainMenu, footer, header { visibility: hidden; }
 
         /* ── Primary button override ─────────  */
-        .stButton > button[kind="primary"] {
-            background: linear-gradient(135deg, #00D4AA, #00A3FF);
-            border: none;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            padding: 0.6rem 1.5rem;
-            border-radius: 10px;
-            transition: opacity 0.2s ease;
+        .stButton > button[kind="primary"],
+        .stButton > button {
+            background-color: #0F172A !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.3px !important;
+            padding: 0.6rem 1.5rem !important;
+            border-radius: 10px !important;
+            transition: background-color 0.2s ease !important;
+            font-family: 'DM Sans', system-ui, sans-serif !important;
         }
-        .stButton > button[kind="primary"]:hover {
-            opacity: 0.85;
+        .stButton > button[kind="primary"]:hover,
+        .stButton > button:hover {
+            background-color: #1E293B !important;
+            color: #FFFFFF !important;
         }
 
         /* ── Input field ─────────────────────  */
         .stTextInput > div > div > input {
-            border-radius: 10px;
-            border: 1px solid #2a3050;
-            background: #151928;
-            font-size: 1.05rem;
-            padding: 0.7rem 1rem;
+            border-radius: 10px !important;
+            border: 1.5px solid #E2E8F0 !important;
+            background: #FFFFFF !important;
+            font-size: 1rem !important;
+            padding: 0.7rem 1rem !important;
             text-transform: uppercase;
+            color: #0F172A !important;
+            font-family: 'DM Sans', system-ui, sans-serif !important;
         }
         .stTextInput > div > div > input:focus {
-            border-color: #00D4AA;
-            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.15);
+            border-color: #0F172A !important;
+            box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08) !important;
+        }
+        .stTextInput > div > div > input::placeholder {
+            color: #CBD5E1 !important;
+            text-transform: none;
+        }
+
+        /* ── Dataframe ───────────────────────  */
+        .stDataFrame {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* ── Plotly chart background ─────────  */
+        .stPlotlyChart {
+            background: transparent;
         }
         </style>
         """,
@@ -302,9 +418,12 @@ def inject_custom_css() -> None:
 def render_header() -> None:
     """Top-of-page branding block."""
     st.markdown(
-        """
+        f"""
         <div class="app-header">
-            <h1>📊 Stock Sentiment Analyzer</h1>
+            <div class="logo-row">
+                {SVG_LOGO}
+                <h1>Stock Sentiment Analyzer</h1>
+            </div>
             <p>Real-time NLP-powered market sentiment from the latest news headlines</p>
         </div>
         <div class="divider"></div>
@@ -314,15 +433,20 @@ def render_header() -> None:
 
 
 def render_verdict(
-    verdict: str, emoji: str, colour: str, avg_score: float, ticker: str
+    verdict: str, svg_icon: str, colour: str, bg_colour: str, avg_score: float, ticker: str
 ) -> None:
     """Full-width verdict banner."""
     st.markdown(
         f"""
         <div class="verdict-card">
             <div class="label">Market Sentiment Verdict · {ticker}</div>
-            <div class="value" style="color:{colour};">{emoji}  {verdict}</div>
-            <div class="sub">Average Compound Score: {avg_score:+.4f}</div>
+            <div class="icon-row">
+                {svg_icon}
+                <span class="value" style="color:{colour};">{verdict}</span>
+            </div>
+            <div class="verdict-badge" style="background:{bg_colour};color:{colour};">
+                Avg. Compound Score: {avg_score:+.4f}
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -334,18 +458,18 @@ def render_metrics(
 ) -> None:
     """Row of four KPI cards."""
     definitions = [
-        ("Headlines Analyzed", str(total)),
-        ("Avg. Compound Score", f"{avg_score:+.4f}"),
-        ("Positive",           f"{pos_pct:.0f}%"),
-        ("Negative",           f"{neg_pct:.0f}%"),
+        ("Headlines Analyzed", str(total), "#0F172A"),
+        ("Avg. Score",         f"{avg_score:+.4f}", "#3B82F6"),
+        ("Positive",           f"{pos_pct:.0f}%",   "#059669"),
+        ("Negative",           f"{neg_pct:.0f}%",   "#DC2626"),
     ]
     cols = st.columns(4, gap="medium")
-    for col, (label, value) in zip(cols, definitions):
+    for col, (label, value, val_colour) in zip(cols, definitions):
         col.markdown(
             f"""
             <div class="metric-card">
                 <div class="label">{label}</div>
-                <div class="value">{value}</div>
+                <div class="value" style="color:{val_colour};">{value}</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -361,7 +485,7 @@ def render_donut_chart(df: pd.DataFrame) -> None:
         counts,
         values="Count",
         names="Sentiment",
-        hole=0.58,
+        hole=0.6,
         color="Sentiment",
         color_discrete_map=SENTIMENT_COLORS,
     )
@@ -369,55 +493,60 @@ def render_donut_chart(df: pd.DataFrame) -> None:
         textposition="outside",
         textinfo="label+percent",
         textfont_size=13,
-        marker=dict(line=dict(color="#0E1117", width=2.5)),
+        textfont_color="#64748B",
+        marker=dict(line=dict(color="#F8FAFC", width=3)),
         hovertemplate=(
             "<b>%{label}</b><br>"
             "Count: %{value}<br>"
             "Share: %{percent}<extra></extra>"
         ),
-        pull=[0.03] * len(counts),
+        pull=[0.02] * len(counts),
     )
     fig.update_layout(
         showlegend=False,
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter, sans-serif", color="#FAFAFA"),
+        font=dict(family="DM Sans, system-ui, sans-serif", color="#0F172A"),
         margin=dict(t=30, b=30, l=10, r=10),
         height=370,
         annotations=[
             dict(
-                text=f"<b>{len(df)}</b><br><span style='font-size:12px'>Headlines</span>",
+                text=f"<b style='font-size:22px;color:#0F172A'>{len(df)}</b>"
+                     f"<br><span style='font-size:12px;color:#94A3B8'>Headlines</span>",
                 x=0.5,
                 y=0.5,
-                font_size=18,
-                font_color="#FAFAFA",
+                font_size=16,
                 showarrow=False,
             )
         ],
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_data_table(df: pd.DataFrame) -> None:
-    """Styled data-table with colour-coded sentiment labels."""
-    display = df[["Status", "Headline", "Publisher", "Score", "Sentiment"]].copy()
+    """Styled data-table with sentiment labels."""
+    # Replace SVG with text labels + colored dots for the dataframe
+    label_map = {"Positive": "🟢", "Negative": "🔴", "Neutral": "🟡"}
+    display = df[["Headline", "Publisher", "Score", "Sentiment"]].copy()
+    display.insert(0, " ", display["Sentiment"].map(label_map))
+
     st.dataframe(
         display,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=400,
         column_config={
-            "Status":    st.column_config.TextColumn("",          width="small"),
-            "Headline":  st.column_config.TextColumn("Headline",  width="large"),
-            "Publisher":  st.column_config.TextColumn("Source",    width="medium"),
-            "Score":      st.column_config.NumberColumn("Score",   format="%.4f", width="small"),
-            "Sentiment":  st.column_config.TextColumn("Sentiment", width="small"),
+            " ":          st.column_config.TextColumn("",          width="small"),
+            "Headline":   st.column_config.TextColumn("Headline",  width="large"),
+            "Publisher":   st.column_config.TextColumn("Source",    width="medium"),
+            "Score":       st.column_config.NumberColumn("Score",   format="%.4f", width="small"),
+            "Sentiment":   st.column_config.TextColumn("Sentiment", width="small"),
         },
     )
 
 
 def render_footer() -> None:
-    """Minimal footer with tech-stack attribution."""
+    """Minimal footer."""
     st.markdown(
         """
         <div class="app-footer">
@@ -435,7 +564,6 @@ def render_footer() -> None:
 def main() -> None:
     """Application entry-point."""
 
-    # ── Page config (must be first Streamlit call) ──
     st.set_page_config(
         page_title="Stock Sentiment Analyzer",
         page_icon="📊",
@@ -454,12 +582,12 @@ def main() -> None:
     with centre:
         ticker_input: str = st.text_input(
             "Enter Stock Ticker",
-            placeholder="e.g.  AAPL,  TSLA,  NVDA,  MSFT …",
+            placeholder="e.g.  AAPL,  TSLA,  NVDA,  MSFT",
             label_visibility="collapsed",
         )
         analyse_clicked: bool = st.button(
-            "🔍  Analyze Sentiment",
-            use_container_width=True,
+            "Analyze Sentiment",
+            width="stretch",
             type="primary",
         )
 
@@ -469,10 +597,10 @@ def main() -> None:
         return
 
     if not analyse_clicked:
-        # Show a subtle call-to-action on first load
         st.markdown(
-            "<p style='text-align:center;color:#4A5568;margin-top:3rem;'>"
-            "Enter a ticker above and press <strong>Analyze Sentiment</strong> to get started.</p>",
+            "<p class='cta-text'>"
+            "Enter a ticker above and press <strong>Analyze Sentiment</strong> to get started."
+            "</p>",
             unsafe_allow_html=True,
         )
         render_footer()
@@ -481,12 +609,12 @@ def main() -> None:
     ticker: str = ticker_input.strip().upper()
 
     # ── Fetch ──
-    with st.spinner(f"Fetching the latest headlines for **{ticker}** …"):
+    with st.spinner(f"Fetching the latest headlines for {ticker}…"):
         headlines = fetch_news(ticker)
 
     if headlines is None:
         st.error(
-            f"⚠️  Could not retrieve news for **{ticker}**. "
+            f"Could not retrieve news for **{ticker}**. "
             "Double-check the symbol and ensure you have an internet connection."
         )
         return
@@ -498,7 +626,7 @@ def main() -> None:
         return
 
     # ── Derived metrics ──
-    verdict_label, verdict_emoji, verdict_colour = compute_verdict(df)
+    verdict_label, verdict_svg, verdict_colour, verdict_bg = compute_verdict(df)
     avg_score: float = df["Score"].mean()
     total: int = len(df)
     counts = df["Sentiment"].value_counts()
@@ -506,21 +634,21 @@ def main() -> None:
     neg_pct: float = counts.get("Negative", 0) / total * 100
 
     # ── Render dashboard ──
-    render_verdict(verdict_label, verdict_emoji, verdict_colour, avg_score, ticker)
-    st.markdown("")  # spacing
+    render_verdict(verdict_label, verdict_svg, verdict_colour, verdict_bg, avg_score, ticker)
+    st.markdown("")
     render_metrics(total, avg_score, pos_pct, neg_pct)
     st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
     chart_col, table_col = st.columns([2, 3], gap="large")
     with chart_col:
         st.markdown(
-            '<div class="section-title">📊 Sentiment Distribution</div>',
+            f'<div class="section-title">{SVG_CHART} Sentiment Distribution</div>',
             unsafe_allow_html=True,
         )
         render_donut_chart(df)
     with table_col:
         st.markdown(
-            '<div class="section-title">📋 Headline Breakdown</div>',
+            f'<div class="section-title">{SVG_TABLE} Headline Breakdown</div>',
             unsafe_allow_html=True,
         )
         render_data_table(df)
@@ -528,6 +656,5 @@ def main() -> None:
     render_footer()
 
 
-# ── Entrypoint ──
 if __name__ == "__main__":
     main()
